@@ -1,0 +1,2 @@
+# SmallShopApp-
+Small shop magazine
