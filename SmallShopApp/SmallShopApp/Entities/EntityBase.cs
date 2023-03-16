@@ -1,0 +1,8 @@
+﻿
+namespace SmallShopApp.Entities
+{
+    public abstract class EntityBase : IEntity
+    {
+        public int Id { get; set; }
+    }
+}
