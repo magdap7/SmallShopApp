@@ -1,4 +1,7 @@
 ﻿
+using System.Reflection.Metadata.Ecma335;
+using System.Text.Json;
+
 namespace SmallShopApp.Entities
 {
     public class Product : EntityBase

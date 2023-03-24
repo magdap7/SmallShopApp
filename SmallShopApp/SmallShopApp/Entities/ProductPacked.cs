@@ -1,4 +1,6 @@
 ﻿
+using System.Text.Json;
+
 namespace SmallShopApp.Entities
 {
     public class ProductPacked : Product
