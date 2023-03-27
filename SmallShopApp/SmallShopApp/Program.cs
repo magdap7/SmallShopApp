@@ -9,10 +9,16 @@ class Program
 {
     static void Main(string[] args)
     {
-        //var productWeightedSqlRepository = new SqlRepository<ProductWeighted>(new SmallShopAppDbContext());
-        //var productPackedSqlRepository = new SqlRepository<ProductPacked>(new SmallShopAppDbContext());
+
+        //var logFilePath = Path.GetFullPath("SmallShopApp\\..\\..\\..\\..\\Data\\");
         var productWeightedListRepository = new ListRepository<ProductWeighted>();
         var productPackedListRepository = new ListRepository<ProductPacked>();
+        productWeightedListRepository.LoadAll();
+        productPackedListRepository.LoadAll();
+        productWeightedListRepository.ItemAdded += RepositoryOnItemAdded;
+        productPackedListRepository.ItemAdded += RepositoryOnItemAdded;
+        productWeightedListRepository.ItemRemoved += RepositoryOnItemRemoved;
+        productPackedListRepository.ItemRemoved += RepositoryOnItemRemoved;
 
         WriteLineColor(ConsoleColor.Green, "Witam w programie Mój Mały Sklep!\n");
         Console.WriteLine("Program umożliwia dodawanie, wyświetlanie lub usuwanie produktów z bazy danych / pliku.\n");
@@ -24,12 +30,12 @@ class Program
         Console.WriteLine();
 
         var option = Console.ReadLine();
-        while (option!=null || option != "q")
+        while (option != null || option != "q")
         {
             switch (option)
             {
                 case "1":
-                    Console.WriteLine("Dodawanie produktu. Wybierz typ produku\n");
+                    WriteLineColor(ConsoleColor.Green, "Dodawanie produktu. Wybierz typ produku\n");
                     Console.WriteLine("1) Produkt na wagę");
                     Console.WriteLine("2) Produkt na sztuki");
                     Console.WriteLine();
@@ -37,7 +43,7 @@ class Program
                     var option1 = Console.ReadLine();
                     if (option1 == "1")
                     {
-                        Console.WriteLine("Dodawanie produktu na wagę.\n");
+                        WriteLineColor(ConsoleColor.Green, "Dodawanie produktu na wagę.\n");
                         List<string> objectParams = ReadObjectFromConsole<ProductWeighted>(new ProductWeighted());
                         var p1 = objectParams[1];
                         var p2 = float.Parse(objectParams[2]);
@@ -46,40 +52,76 @@ class Program
                     }
                     else if (option1 == "2")
                     {
-                        Console.WriteLine("Dodawanie produktu na sztuki.\n");
+                        WriteLineColor(ConsoleColor.Green, "Dodawanie produktu na sztuki.\n");
                         List<string> objectParams = ReadObjectFromConsole<ProductPacked>(new ProductPacked());
                         var p1 = objectParams[1];
                         var p2 = float.Parse(objectParams[2]);
                         var p3 = int.Parse(objectParams[0]);
-                        productPackedListRepository.Add(new ProductPacked { Name = p1, Price = p2, Quantity = p3});
+                        productPackedListRepository.Add(new ProductPacked { Name = p1, Price = p2, Quantity = p3 });
                     }
                     else
-                    { 
-                        Console.WriteLine("Nie wybrano właściwej opcji.\n");
+                    {
+                        WriteLineColor(ConsoleColor.Red, "Nie wybrano właściwej opcji.\n");
                     };
-
-                    //productWeightedSqlRepository.Add(new ProductWeighted { Name = "jablka", Price = 1.3f, Weight = 2.5f });
-                    //productWeightedSqlRepository.Save();
-                    //productPackedSqlRepository.Add(new ProductPacked { Name = "sok", Price = 6, Quantity = 1 });
-                    //productPackedSqlRepository.Save();
-
                     break;
                 case "2":
-                    Console.WriteLine("Usuwanie produktu\n");
+                    WriteLineColor(ConsoleColor.Green, "Usuwanie produktu.  Wybierz typ produku\n");
+                    Console.WriteLine("1) Produkt na wagę");
+                    Console.WriteLine("2) Produkt na sztuki");
+                    Console.WriteLine();
+
+                    string line;
+                    var option2 = Console.ReadLine();
+                    if (option2 == "1")
+                    {
+                        WriteLineColor(ConsoleColor.Green, "Usuwanie produktu na wagę.\n");
+                        Console.WriteLine("Podaj ID produktu\n");
+                        line = Console.ReadLine();
+                        while (!int.TryParse(line, out int value))
+                        {
+                            WriteLineColor(ConsoleColor.Red, "Niepoprawny format ID, spróbuj ponownie\n");
+                            line = Console.ReadLine();
+                        }
+                        try
+                        {
+                            productWeightedListRepository.Remove(productWeightedListRepository.GetById(int.Parse(line)));
+                        }
+                        catch (Exception ex) { WriteLineColor(ConsoleColor.Red, ex.Message); };
+                    }
+                    else if (option2 == "2")
+                    {
+                        WriteLineColor(ConsoleColor.Green, "Usuwanie produktu na sztuki.\n");
+                        Console.WriteLine("Podaj ID produktu\n");
+                        line = Console.ReadLine();
+                        while (!int.TryParse(line, out int value))
+                        {
+                            WriteLineColor(ConsoleColor.Red, "Niepoprawny format ID, spróbuj ponownie\n");
+                            line = Console.ReadLine();
+                        }
+                        try
+                        {
+                            productPackedListRepository.Remove(productPackedListRepository.GetById(int.Parse(line)));
+                        }
+                        catch (Exception ex) { WriteLineColor(ConsoleColor.Red, ex.Message); };
+                    }
+                    else
+                    {
+                        WriteLineColor(ConsoleColor.Red, "Nie wybrano właściwej opcji.\n");
+                    }
                     break;
                 case "3":
                     Console.WriteLine("Wyświetlenie listy produktów\n");
-                    //WriteAllToConsole(productWeightedSqlRepository);
-                    //WriteAllToConsole(productPackedSqlRepository);
                     WriteAllToConsole(productWeightedListRepository);
                     WriteAllToConsole(productPackedListRepository);
                     break;
                 case "q":
+                    productWeightedListRepository.Save();
+                    productPackedListRepository.Save();
                     Console.WriteLine("Do zobaczenia");
                     return;
                     break;
                 default:
-                    Console.WriteLine("Nieprawidłowy wybór.");
+                    WriteLineColor(ConsoleColor.Red, "Nieprawidłowy wybór.");
                     break;
             }
             Console.WriteLine("Wybierz kolejną opcję");
@@ -93,7 +135,7 @@ class Program
             var nameOfType = obj.GetType().Name;
             var properties = obj.GetType().GetProperties().ToArray();
             Console.WriteLine("Type properties for object from class: " + nameOfType);
-            for (int i = 0; i < properties.Length-1; i++)
+            for (int i = 0; i < properties.Length - 1; i++)
             {
                 var propertyName = properties[i].ToString().Split(" ");
                 Console.Write(propertyName[1] + ": ");
@@ -110,31 +152,30 @@ class Program
             }
             return result;
         }
-    }
 
-
-    static void WriteObjectToFile<T>(T obj)
-    {
-        var jsonObj = JsonSerializer.Serialize<T>(obj);
-        using (var writer = File.AppendText(obj.GetType().Name + ".txt"))
+        void RepositoryOnItemAdded<T>(object? sender, T obj)
         {
-            writer.WriteLine(jsonObj);
-        }
-    }
-
-    static List<T> ReadObjectsFromFile<T>(string file)
-    {
-        List<T> objList = new List<T>();
-        using (var reader = File.OpenText(file))
-        {
-            var line = reader.ReadLine();
-            if (line != null)
+            var fileName = obj.GetType().Name + "s";
+            var currentDate = DateTime.UtcNow.ToString("yyyy-MM-dd hh.mm.ss");
+            var lineToFile = $"Object: {obj.GetType().Name}\t Sender: {sender.GetType().Name}\t Action: Added";
+            using (var writer = File.AppendText("_Log" + fileName + ".txt"))
             {
-                objList.Add(JsonSerializer.Deserialize<T>(line));
-                line = reader.ReadLine();
+                writer.WriteLine(currentDate + "\t" + lineToFile);
             }
+            WriteLineColor(ConsoleColor.Blue, currentDate + "\t" + lineToFile);
         }
-        return objList;
+
+        void RepositoryOnItemRemoved<T>(object? sender, T obj)
+        {
+            var fileName = obj.GetType().Name + "s";
+            var currentDate = DateTime.UtcNow.ToString("yyyy-MM-dd hh.mm.ss");
+            var lineToFile = $"Object: {obj.GetType().Name}\t Sender: {sender.GetType().Name}\t Action: Removed";
+            using (var writer = File.AppendText("_Log" + fileName + ".txt"))
+            {
+                writer.WriteLine(currentDate + "\t" + lineToFile);
+            }
+            WriteLineColor(ConsoleColor.Blue, currentDate + "\t" + lineToFile);
+        }
     }
 
     static void WriteAllToConsole(IReadRepository<IEntity> repository)
@@ -150,18 +191,5 @@ class Program
         Console.WriteLine(text);
         Console.ResetColor();
     }
-
-    static void tests()
-    {
-        List<string> objectParams = new List<string>();
-        objectParams.Add("price");
-        objectParams.Add("name");
-        objectParams.Add("id");
-        Console.WriteLine(objectParams.First());
-        objectParams.Reverse();
-        Console.WriteLine(objectParams.First());
-    }
-
-
 }
 

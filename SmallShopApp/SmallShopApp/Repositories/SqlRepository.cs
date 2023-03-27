@@ -16,6 +16,11 @@ namespace SmallShopApp.Repositories
             _dbSet = _dbContext.Set<T>();
         }
 
+        public void LoadAll()
+        {
+            throw new NotImplementedException();
+        }
+
         public void Add(T item)
         {
             _dbSet.Add(item);
